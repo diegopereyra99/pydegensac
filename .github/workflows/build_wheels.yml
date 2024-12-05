@@ -73,7 +73,7 @@ jobs:
       # Install dependencies and tools (LAPACK, BLAS, etc.)
       - name: Install dependencies
         run: |
-          conda install -y cmake blas=*=openblas lapack numpy setuptools wheel
+          conda install -n base -y -c conda-forge cmake blas=*=openblas lapack numpy setuptools wheel
           conda run -n base python -m pip install cibuildwheel
 
       # Set up C/C++ compiler (MSVC on Windows)
