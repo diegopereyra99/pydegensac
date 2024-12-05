@@ -78,9 +78,9 @@ jobs:
 
       # Set up C/C++ compiler (MSVC on Windows)
       - name: Set up C/C++ compiler
-        uses: actions/setup-c-c-compiler@v1
+        uses: rlalik/setup-cpp-compiler@master
         with:
-          compiler: 'msvc'  # Use Microsoft Visual C++ compiler on Windows
+          compiler: latest
 
       # Build the Wheel using cibuildwheel
       - name: Build the Wheel
