@@ -52,38 +52,30 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3  # Checkout the code
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Install Miniconda
-      run: |
-        choco install miniconda3 --yes  # Install Miniconda using Chocolatey
-        echo "C:\\tools\\miniconda3" >> $GITHUB_PATH  # Add Miniconda to PATH
+      - name: Install Miniconda
+        run: |
+          choco install miniconda3 --yes
+          echo "C:\\tools\\miniconda3\\condabin" >> $GITHUB_PATH
 
-    - name: Configure Conda
-      run: |
-        source C:/tools/miniconda3/etc/profile.d/conda.sh  # Source Conda script
-        conda init bash  # Initialize Conda for bash shell
-        conda config --add channels conda-forge  # Add conda-forge channel
-        conda config --set channel_priority strict  # Prioritize conda-forge
+      - name: Configure Conda
+        run: |
+          conda config --add channels conda-forge
+          conda config --set channel_priority strict
 
-    - name: Create Conda Environment
-      shell: bash
-      run: |
-        source C:/tools/miniconda3/etc/profile.d/conda.sh  # Source Conda script
-        conda create -n build-env -y python=3.11 cmake blas=*=openblas lapack numpy setuptools wheel  # Create environment
-        conda activate build-env  # Activate environment
-        python -m pip install cibuildwheel  # Install cibuildwheel for building wheels
+      - name: Create Conda Environment and Install Dependencies
+        run: |
+          conda create -n build-env -y python=3.11 cmake blas=*=openblas lapack numpy setuptools wheel
+          conda run -n build-env python -m pip install cibuildwheel
 
-    - name: Build the Wheel
-      shell: bash
-      run: |
-        source C:/tools/miniconda3/etc/profile.d/conda.sh  # Source Conda script
-        conda activate build-env  # Activate environment
-        python -m cibuildwheel --platform windows --output-dir wheelhouse  # Build wheels and save them to 'wheelhouse'
+      - name: Build the Wheel
+        run: |
+          conda run -n build-env python -m cibuildwheel --platform windows --output-dir wheelhouse
 
-    - name: Upload Wheel Artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: windows-wheel
-        path: wheelhouse/*.whl  # Upload the built wheels
+      - name: Upload Wheel Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-wheel
+          path: wheelhouse/*.whl
