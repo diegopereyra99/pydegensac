@@ -1,17 +1,54 @@
-name: Build and Install Python Wheel for Windows
+name: Build
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:  # This allows manual trigger from GitHub UI
-
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
-  build:
+#  build_wheels:
+#    name: Build wheels on ubuntu-20.04
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      # Used to host cibuildwheel
+#      - uses: actions/setup-python@v2
+#
+#      - name: Install cibuildwheel
+#        run: python3 -m pip install cibuildwheel==2.0.0a2
+#      - name: Build wheels
+#        run: python3 -m cibuildwheel --output-dir wheelhouse
+#        # to supply options, put them in 'env', like:
+#        env:
+#          CIBW_BEFORE_ALL: yum install -y  lapack-devel  blas-devel
+#
+#      - uses: actions/upload-artifact@v2
+#        with:
+#          path: ./wheelhouse/*.whl
+  
+  build_wheels_mac:
+    name: Build wheels on mac
+    runs-on: macOS-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Used to host cibuildwheel
+      - uses: actions/setup-python@v2
+
+      - name: Install cibuildwheel
+        run: python3 -m pip install cibuildwheel==2.0.0a2
+      - name: Build wheels
+        run: python3 -m cibuildwheel --output-dir wheelhouse
+        # to supply options, put them in 'env', like:
+        env:
+          CIBW_BEFORE_ALL: brew install openblas python
+          CIBW_ARCHS_MACOS: x86_64 universal2
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./wheelhouse/*.whl
+  
+  build_wheels_win:
+    name: Build wheels on Windows
     runs-on: windows-latest  # Use the latest Windows runner
     
     steps:
@@ -49,8 +86,8 @@ jobs:
         pip install .  # Install the package using pip (this is equivalent to 'python setup.py install')
         # OR: python ./setup.py install  # Uncomment this line if you want to use 'setup.py install' instead of pip
 
-    - name: Upload wheel artifact (optional)
+    - name: Upload wheel artifact
       uses: actions/upload-artifact@v3
       with:
-        name: wheel
         path: dist/*.whl  # Upload the built wheel to GitHub Actions artifacts
+
