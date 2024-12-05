@@ -65,15 +65,14 @@ jobs:
           channels: conda-forge
           channel-priority: strict
 
-      # # Install CMake on Windows
-      # - name: Install CMake
-      #   run: |
-      #     choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+      - name: Install CMake
+      run: |
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
 
       # Install dependencies and tools (LAPACK, BLAS, etc.)
       - name: Install dependencies
         run: |
-          conda install -y -c conda-forge cmake blas=*=openblas lapack numpy setuptools wheel
+          conda install -y -c conda-forge libblas liblapack openblas numpy setuptools wheel
           python -m pip install cibuildwheel
 
       # Set up C/C++ compiler (MSVC on Windows)
