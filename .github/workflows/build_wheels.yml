@@ -50,7 +50,7 @@ jobs:
   build_wheels_win:
     name: Build wheels on Windows
     runs-on: windows-latest  # Use the latest Windows runner
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3  # Checkout the repository
@@ -64,30 +64,36 @@ jobs:
       run: |
         choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'  # Install CMake via Chocolatey
 
-    - name: Install dependencies
+    - name: Install Miniconda
       run: |
-        python -m pip install --upgrade pip  # Upgrade pip to the latest version
-        python -m pip install wheel setuptools  # Install wheel and setuptools (necessary for building wheels)
-        python -m pip install numpy==1.26.4  # Install numpy if your project requires it
+        choco install miniconda3 --yes  # Install Miniconda
+        echo "C:\\tools\\miniconda3" >> $GITHUB_PATH  # Add Miniconda to PATH
 
-    - name: Install OpenBLAS and LAPACK (via conda)
+    - name: Install OpenBLAS and LAPACK
+      shell: bash
       run: |
-        choco install miniconda3  # Install Miniconda for managing dependencies like OpenBLAS, LAPACK
-        call C:\tools\Miniconda3\Scripts\activate.bat  # Activate Miniconda
-        conda install -y -c conda-forge libblas liblapack openblas  # Install LAPACK, BLAS via conda
+        source C:/tools/miniconda3/etc/profile.d/conda.sh  # Source Conda script
+        conda init bash  # Initialize Conda
+        conda create -n build-env -y python=3.11 blas=*=openblas lapack  # Create Conda environment
+        conda activate build-env  # Activate the environment
+        python -m pip install --upgrade pip  # Ensure pip is updated
 
-    - name: Set up C++ build tools (MSVC)
+    - name: Install Build Tools (MSVC)
       run: |
-        choco install visualcpp-build-tools  # Install the Visual C++ build tools via Chocolatey
+        choco install visualstudio2019buildtools --yes --ignore-checksums  # Install Visual Studio Build Tools
         echo "::add-path::C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\MSBuild\\Current\\Bin" >> $GITHUB_PATH  # Add MSBuild to PATH
 
-    - name: Install the package
+    - name: Install Dependencies for Python Package
       run: |
-        pip install .  # Install the package using pip (this is equivalent to 'python setup.py install')
-        # OR: python ./setup.py install  # Uncomment this line if you want to use 'setup.py install' instead of pip
+        python -m pip install wheel setuptools  # Install wheel and setuptools
+        python -m pip install numpy==1.26.4  # Install numpy if required by the project
 
-    - name: Upload wheel artifact
+    - name: Build the Package
+      run: |
+        python setup.py bdist_wheel  # Build the package into a wheel
+
+    - name: Upload Wheel Artifact
       uses: actions/upload-artifact@v3
       with:
-        path: dist/*.whl  # Upload the built wheel to GitHub Actions artifacts
-
+        name: windows-wheels  # Name the artifact
+        path: dist/*.whl  # Path to the built wheels
