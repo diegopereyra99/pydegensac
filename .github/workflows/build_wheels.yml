@@ -46,54 +46,44 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
-  
-  build_wheels_win:
-    name: Build wheels on Windows
-    runs-on: windows-latest  # Use the latest Windows runner
+
+  build_wheel_win:
+    name: Build Wheel on Windows
+    runs-on: windows-latest
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3  # Checkout the repository
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'  # Specify Python 3.11
-
-    - name: Install CMake
-      run: |
-        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'  # Install CMake via Chocolatey
+      uses: actions/checkout@v3  # Checkout the code
 
     - name: Install Miniconda
       run: |
-        choco install miniconda3 --yes  # Install Miniconda
+        choco install miniconda3 --yes  # Install Miniconda using Chocolatey
         echo "C:\\tools\\miniconda3" >> $GITHUB_PATH  # Add Miniconda to PATH
 
-    - name: Install OpenBLAS and LAPACK
+    - name: Configure Conda
+      run: |
+        source C:/tools/miniconda3/etc/profile.d/conda.sh  # Source Conda script
+        conda init bash  # Initialize Conda for bash shell
+        conda config --add channels conda-forge  # Add conda-forge channel
+        conda config --set channel_priority strict  # Prioritize conda-forge
+
+    - name: Create Conda Environment
       shell: bash
       run: |
         source C:/tools/miniconda3/etc/profile.d/conda.sh  # Source Conda script
-        conda init bash  # Initialize Conda
-        conda create -n build-env -y python=3.11 blas=*=openblas lapack  # Create Conda environment
-        conda activate build-env  # Activate the environment
-        python -m pip install --upgrade pip  # Ensure pip is updated
+        conda create -n build-env -y python=3.11 cmake blas=*=openblas lapack numpy setuptools wheel  # Create environment
+        conda activate build-env  # Activate environment
+        python -m pip install cibuildwheel  # Install cibuildwheel for building wheels
 
-    - name: Install Build Tools (MSVC)
+    - name: Build the Wheel
+      shell: bash
       run: |
-        choco install visualstudio2019buildtools --yes --ignore-checksums  # Install Visual Studio Build Tools
-        echo "::add-path::C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\MSBuild\\Current\\Bin" >> $GITHUB_PATH  # Add MSBuild to PATH
-
-    - name: Install Dependencies for Python Package
-      run: |
-        python -m pip install wheel setuptools  # Install wheel and setuptools
-        python -m pip install numpy==1.26.4  # Install numpy if required by the project
-
-    - name: Build the Package
-      run: |
-        python setup.py bdist_wheel  # Build the package into a wheel
+        source C:/tools/miniconda3/etc/profile.d/conda.sh  # Source Conda script
+        conda activate build-env  # Activate environment
+        python -m cibuildwheel --platform windows --output-dir wheelhouse  # Build wheels and save them to 'wheelhouse'
 
     - name: Upload Wheel Artifact
       uses: actions/upload-artifact@v3
       with:
-        name: windows-wheels  # Name the artifact
-        path: dist/*.whl  # Path to the built wheels
+        name: windows-wheel
+        path: wheelhouse/*.whl  # Upload the built wheels
