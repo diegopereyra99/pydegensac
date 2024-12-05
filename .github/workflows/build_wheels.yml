@@ -66,8 +66,8 @@ jobs:
           channel-priority: strict
 
       - name: Install CMake
-      run: |
-        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
 
       # Install dependencies and tools (LAPACK, BLAS, etc.)
       - name: Install dependencies
